@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class AddressBookDTO {
-
+    @Pattern(regexp = "^[A-Z][a-zA-Z\\\\s]*$")
     @NotBlank(message = "Name is mandatory")
     private String name;
 
