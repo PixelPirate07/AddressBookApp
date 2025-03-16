@@ -33,7 +33,7 @@ public class AuthService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("Invalid credentials!");
         }
-
-        return jwtUtility.generateToken(email);
+        String role = user.getRole();
+        return jwtUtility.generateToken(email,role);
     }
 }

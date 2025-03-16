@@ -12,11 +12,12 @@ public class JWTUtility {
 
     private static final String SECRET_KEY = "YourSecretKeyForJWTGenerationMustBeAtLeast32CharactersLong";
 
-    public String generateToken(String email) {
+    public String generateToken(String email,String role) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1)) // 24 hrs
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1)) // 1hr
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -29,10 +30,22 @@ public class JWTUtility {
                 .getBody()
                 .getSubject();
     }
-
-    public boolean validateToken(String token, String userEmail) {
-        return extractEmail(token).equals(userEmail) && !isTokenExpired(token);
+    public String extractRole(String token) {
+        return (String) Jwts.parser()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("role");
     }
+
+    public boolean validateToken(String token, String userEmail, String expectedRole) {
+        String tokenRole = extractRole(token);
+        return extractEmail(token).equals(userEmail)
+                && tokenRole.equals(expectedRole)
+                && !isTokenExpired(token);
+    }
+
 
     private boolean isTokenExpired(String token) {
         return Jwts.parser().setSigningKey(getSigningKey()).build()

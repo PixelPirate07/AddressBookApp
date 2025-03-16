@@ -4,6 +4,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -33,4 +35,6 @@ public class User {
         this.password = password;
         this.role = role;
     }
+    private String resetToken;
+    private LocalDateTime tokenExpiry;
 }
