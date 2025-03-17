@@ -2,6 +2,7 @@ package com.bridglelabz.addressbookapp.model;
 
 import com.bridglelabz.addressbookapp.dto.AddressBookDTO;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

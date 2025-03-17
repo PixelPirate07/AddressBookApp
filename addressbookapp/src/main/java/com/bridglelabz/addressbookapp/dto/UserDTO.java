@@ -6,6 +6,7 @@ import lombok.*;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserDTO {
 
     @NotBlank(message = "Name is mandatory")
