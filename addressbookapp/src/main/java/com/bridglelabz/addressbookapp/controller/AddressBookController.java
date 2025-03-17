@@ -30,7 +30,7 @@ public class AddressBookController {
         AddressBook addedContact = addressBookService.addContact(addressBookDTO);
         String message = "New contact added: " + addedContact.getName() + " (" + addedContact.getEmail() + ")";
         addressBookProducer.sendMessage(message);
-        return ResponseEntity.ok(addressBookService.addContact(addressBookDTO));
+        return ResponseEntity.ok(addedContact);
     }
 
     @GetMapping("/{id}")

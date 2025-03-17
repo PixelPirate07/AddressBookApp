@@ -5,8 +5,12 @@ import com.bridglelabz.addressbookapp.model.User;
 import com.bridglelabz.addressbookapp.repository.UserRepository;
 import com.bridglelabz.addressbookapp.util.JWTUtility;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -19,6 +23,9 @@ public class AuthService {
 
     @Autowired
     BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
     public User registerUser(UserDTO userDTO) {
         userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
@@ -34,6 +41,9 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials!");
         }
         String role = user.getRole();
-        return jwtUtility.generateToken(email,role);
+        String token=jwtUtility.generateToken(email,role);
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        valueOperations.set("TOKEN_" + email, token, 1, TimeUnit.HOURS);
+        return token;
     }
 }
