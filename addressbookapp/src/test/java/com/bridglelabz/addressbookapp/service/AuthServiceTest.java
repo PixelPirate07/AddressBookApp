@@ -2,6 +2,7 @@ package com.bridglelabz.addressbookapp.service;
 
 import com.bridglelabz.addressbookapp.dto.UserDTO;
 import com.bridglelabz.addressbookapp.model.User;
+import com.bridglelabz.addressbookapp.rabbitmq.AddressBookProducer;
 import com.bridglelabz.addressbookapp.repository.UserRepository;
 import com.bridglelabz.addressbookapp.util.JWTUtility;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,9 @@ class AuthServiceTest {
 
     @Mock
     private BCryptPasswordEncoder passwordEncoder;
+    @Mock
+    private AddressBookProducer addressBookProducer;
+
 
     @InjectMocks
     private AuthService authService;
@@ -43,17 +47,18 @@ class AuthServiceTest {
     @Test
     void testRegisterUser() {
         UserDTO userDTO = new UserDTO("Test User", "test@gmail.com", "password123", "USER");
-        User testUser = new User("Test User", "test@gmail.com", "encodedPassword", "USER");
+        User testUser = new User(userDTO.getName(), userDTO.getEmail(), "encodedPassword", userDTO.getRole());
 
         when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         User registeredUser = authService.registerUser(userDTO);
 
-        assertEquals("test@gmail.com", registeredUser.getEmail()); // Recommended
+        assertEquals("test@gmail.com", registeredUser.getEmail());
         assertEquals("Test User", registeredUser.getName());
         verify(userRepository, times(1)).save(any(User.class));
     }
+
 
     //assertFalse
     @Test
@@ -68,12 +73,15 @@ class AuthServiceTest {
 
     //assertThrows
     @Test
-    void testLoginUser_UserNotFound() {
-        when(userRepository.findByEmail("non.existing@example.com")).thenReturn(Optional.empty());
+    void testLoginUser_InvalidToken() {
+        when(userRepository.findByEmail("john.doe@example.com")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("encodedPassword", testUser.getPassword())).thenReturn(true);
+        when(jwtUtility.generateToken(anyString(), anyString())).thenThrow(new RuntimeException("Invalid Token!"));
 
         Exception exception = assertThrows(RuntimeException.class,
-                () -> authService.loginUser("non.existing@example.com", "password123"));
+                () -> authService.loginUser("john.doe@example.com", "encodedPassword"));
 
-        assertEquals("User not found!", exception.getMessage());
+        assertEquals("Invalid Token!", exception.getMessage());
     }
+
 }

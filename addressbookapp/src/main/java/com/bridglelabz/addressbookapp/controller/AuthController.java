@@ -28,7 +28,6 @@ public class AuthController {
     @Operation(summary = "Register a new user", description = "Registers a new user with provided details.")
     public String register(@RequestBody UserDTO userDTO) {
         authService.registerUser(userDTO);
-        emailService.sendWelcomeEmail(userDTO.getEmail(), userDTO.getName());
         return "User Registered Successfully!";
     }
 

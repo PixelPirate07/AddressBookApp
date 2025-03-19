@@ -30,10 +30,10 @@ class AddressBookServiceTest {
     @BeforeEach
     void setUp() {
         AddressBookDTO addressBookDTO = new AddressBookDTO("John Doe", "123 Street", "9876543210", "john.doe@example.com");
-        testContact = new AddressBook(addressBookDTO);  // ✅ DTO-based Constructor
+        testContact = new AddressBook(addressBookDTO);
     }
 
-    // ✅ assertTrue Example
+    // assertTrue
     @Test
     void testAddContact() {
         AddressBookDTO addressBookDTO = new AddressBookDTO("John Doe", "123 Street", "9876543210", "john.doe@example.com");
@@ -45,7 +45,7 @@ class AddressBookServiceTest {
         verify(addressBookRepository, times(1)).save(any(AddressBook.class));
     }
 
-    // ❌ assertFalse Example
+    // assertFalse
     @Test
     void testDeleteContact_Failure() {
         when(addressBookRepository.findById(99)).thenReturn(Optional.empty());
@@ -56,14 +56,16 @@ class AddressBookServiceTest {
         assertEquals("Contact not found for ID: 99", exception.getMessage());
     }
 
-    // ⚠️ assertThrows Example
+    // assertThrows
     @Test
-    void testGetContactById_NotFound() {
-        when(addressBookRepository.findById(11)).thenReturn(Optional.empty());
+    void testAddContact_Failure() {
+        AddressBookDTO addressBookDTO = new AddressBookDTO("Jane Doe", "456 Avenue", "9999999999", "jane.doe@gmail.com");
 
-        Exception exception = assertThrows(ContactNotFoundException.class,
-                () -> addressBookService.getContactById(11));
+        when(addressBookRepository.save(any(AddressBook.class))).thenThrow(new RuntimeException("Database Error!"));
 
-        assertEquals("Contact not found for ID: 11", exception.getMessage());
+        Exception exception = assertThrows(RuntimeException.class,
+                () -> addressBookService.addContact(addressBookDTO));
+
+        assertEquals("Database Error!", exception.getMessage());
     }
 }

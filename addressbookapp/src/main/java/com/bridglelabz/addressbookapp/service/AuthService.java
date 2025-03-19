@@ -2,6 +2,7 @@ package com.bridglelabz.addressbookapp.service;
 
 import com.bridglelabz.addressbookapp.dto.UserDTO;
 import com.bridglelabz.addressbookapp.model.User;
+import com.bridglelabz.addressbookapp.rabbitmq.AddressBookProducer;
 import com.bridglelabz.addressbookapp.repository.UserRepository;
 import com.bridglelabz.addressbookapp.util.JWTUtility;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,23 +28,41 @@ public class AuthService {
     @Autowired
     StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private AddressBookProducer addressBookProducer;
+
     public User registerUser(UserDTO userDTO) {
-        userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        User user = new User(userDTO.getName(), userDTO.getEmail(), userDTO.getPassword(), userDTO.getRole());
-        return userRepository.save(user);
+        try{
+            userDTO.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+            User user = new User(userDTO.getName(), userDTO.getEmail(), userDTO.getPassword(), userDTO.getRole());
+            addressBookProducer.sendEmailMessage(user.getEmail(),
+                    "Welcome to AddressBook App!",
+                    "Congratulations " + user.getName() + "! Your registration was successful.");
+            return userRepository.save(user);
+        }catch (Exception e) {
+            throw new RuntimeException("Failed to register user: " + e.getMessage());
+        }
+
     }
 
     public String loginUser(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found!"));
+        try{
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found!"));
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials!");
+            if (!passwordEncoder.matches(password, user.getPassword())) {
+                throw new RuntimeException("Invalid credentials!");
+            }
+            String role = user.getRole();
+            String token=jwtUtility.generateToken(email,role);
+            ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+            valueOperations.set("TOKEN_" + email, token, 1, TimeUnit.HOURS);
+            return token;
+        }catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Login process failed: " + e.getMessage());
         }
-        String role = user.getRole();
-        String token=jwtUtility.generateToken(email,role);
-        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
-        valueOperations.set("TOKEN_" + email, token, 1, TimeUnit.HOURS);
-        return token;
+
     }
 }
