@@ -17,7 +17,7 @@ public class JWTUtility {
                 .setSubject(email)
                 .claim("role", role)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 1)) // 1 minute
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 *60* 1)) // 1 hr
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
